@@ -136,6 +136,8 @@ export class CdkLampStack extends cdk.Stack {
       containerPort: 80,   // phpMyAdmin 内部ポート
       hostPort: 8888       // ECS EC2 の外部ポート
     });
+
+    phpMyAdminContainer.addLink(mysqlContainer, 'mysql-container');
     
     // ✅ 2. PHP-Apache コンテナ（80:8080）
     const phpContainer = taskDefinition.addContainer('php-apache-container', {
@@ -161,7 +163,7 @@ export class CdkLampStack extends cdk.Stack {
 
     phpContainer.addPortMappings({ 
       containerPort: 80,   // PHP-Apache 内部ポート
-      hostPort: 8080       // ECS EC2 の外部ポート
+      hostPort: 8080    // ECS EC2 の外部ポート
     });
 
     phpContainer.addMountPoints({
@@ -170,12 +172,12 @@ export class CdkLampStack extends cdk.Stack {
       readOnly: false,
     });
 
-    
-
-
     const ecsService = new ecs.Ec2Service(this, 'LampService', {
       cluster,
       taskDefinition,
+      desiredCount: 1,// 初期タスク数
+      minHealthyPercent: 0,  // 最小 0%
+      maxHealthyPercent: 100, // 最大 100%
     });
     const listener = alb.addListener('MyListener', {
       port: 80,
